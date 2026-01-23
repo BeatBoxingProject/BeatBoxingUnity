@@ -49,6 +49,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TargetHit
   gloveTag: PlayerHand
   hitParticlePrefab: {fileID: 1463230572925675950, guid: ca3f524a6cb90ee45989349ad0e09220, type: 3}
+  hitSound: {fileID: 8300000, guid: d41c7a79d6bb54c40836e69e9bae2d47, type: 3}
 --- !u!33 &6834583984998268759
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -104,6 +105,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!135 &8935973303825326896
 SphereCollider:
