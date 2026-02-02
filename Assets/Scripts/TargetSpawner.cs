@@ -1,19 +1,23 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic; // Required for Lists
 
 public class TargetSpawner : MonoBehaviour
 {
     [Header("Configuration")]
     public GameObject targetPrefab; // Assign your Red Sphere prefab here
     public Transform bagCenter;     // Assign your Bag Cylinder here
-    public float bagRadius = 0.2f;  // Radius of your bag in Unity units
-    public float bagHeight = 1.5f;  // Height of punchable area
+    public float bagRadius = 0.19f;  // Radius of your bag in Unity units
+    public float bagHeight = 0.4f;  // Height of punchable area
 
     [Tooltip("The total angle width. Example: 90 will result in -45 to +45 degrees.")]
     public float spawnAngleRange = 90f;
 
-    // Internal tracker for the single active target
-    private GameObject currentTarget;
+    [Tooltip("How many targets should exist at the same time.")]
+    public int maxConcurrentTargets = 2; // NEW: Set this to 3, 5, etc.
+
+    // Internal tracker for multiple active targets
+    private List<GameObject> activeTargets = new List<GameObject>();
 
     void Start()
     {
@@ -23,14 +27,23 @@ public class TargetSpawner : MonoBehaviour
             bagCenter = new GameObject("BagCenter").transform;
         }
 
-        SpawnTarget();
+        // Initial fill
+        MaintainTargetCount();
     }
 
     void Update()
     {
-        // Check if the current target is gone (hit by player)
-        // If so, spawn the next one immediately
-        if (currentTarget == null)
+        // Check if any targets are gone (hit by player)
+        // Remove null entries from the list (targets that were destroyed)
+        activeTargets.RemoveAll(item => item == null);
+
+        // If we have fewer targets than the max, spawn more immediately
+        MaintainTargetCount();
+    }
+
+    void MaintainTargetCount()
+    {
+        while (activeTargets.Count < maxConcurrentTargets)
         {
             SpawnTarget();
         }
@@ -59,8 +72,8 @@ public class TargetSpawner : MonoBehaviour
         // 4. Instantiate
         GameObject newTarget = Instantiate(targetPrefab, spawnPos, Quaternion.identity);
 
-        // Store the reference so we know when it's destroyed
-        currentTarget = newTarget;
+        // Add to our list of active targets so we can track it
+        activeTargets.Add(newTarget);
 
         // 5. Apply User Scale
         newTarget.transform.localScale = new Vector3(0.1f, 0.1f, 0.01f);
