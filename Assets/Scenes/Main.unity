@@ -1093,7 +1093,7 @@ MonoBehaviour:
   leftHandObject: {fileID: 1407819698}
   rightHandObject: {fileID: 1191044826}
   scaleMultiplier: 1
-  offset: {x: -0.46, y: 1.12, z: -0.65}
+  offset: {x: -0.42, y: 1.27, z: -0.58}
   flipX: 0
   flipY: 1
   flipZ: 1
