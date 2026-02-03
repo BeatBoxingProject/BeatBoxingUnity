@@ -1,4 +1,4 @@
-# 🚀 Project Overview
+# 🚀 Unity Simulation & Game Logic
 
 This folder contains the **Unity project** responsible for the visual frontend and game logic of the *Beat Boxing* mixed-reality system. It receives real-time tracking data from the Python backend, handles the game loop, and renders the projection mapping output.
 
