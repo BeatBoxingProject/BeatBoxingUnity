@@ -2,7 +2,7 @@
 
 This folder contains the **Unity project** responsible for the visual frontend and game logic of the *Beat Boxing* mixed-reality system. It receives real-time tracking data from the Python backend, handles the game loop, and renders the projection mapping output.
 
-## 🎮 System Overview
+## 🏗️ System Overview
 
 While the Python backend handles the heavy lifting of computer vision, Unity serves as the **Game Engine** and **Renderer**.
 
