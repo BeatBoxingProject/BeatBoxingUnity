@@ -97,3 +97,12 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Jetbrains IDE
+# Ignore all local workspace files in the .idea folder
+.idea/
+# Exceptions: Allow specific team-wide configuration files to be tracked
+!.idea/vcs.xml
+!.idea/misc.xml
+!.idea/runConfigurations/
+!.idea/codeStyles/
