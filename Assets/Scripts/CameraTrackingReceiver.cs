@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Globalization;
 
-public class DualHandReceiver : MonoBehaviour
+public class CameraTrackingReceiver : MonoBehaviour
 {
     [Header("Network Settings")]
     public int port = 5005;
