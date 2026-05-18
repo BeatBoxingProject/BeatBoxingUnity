@@ -75,6 +75,14 @@ public class SensorTrackingReceiver : MonoBehaviour
     [Tooltip("Minimum force required on an axis to display the arrow. Hides completely if below this value.")]
     public float minDisplayThreshold = 200f;
 
+    [Header("Visibility Toggles")]
+    [Tooltip("Show the individual X (Red), Y (Green), and Z (Blue) component vectors.")]
+    public bool showAxisVectors = true;
+
+    [Tooltip("Show the combined net acceleration vector (Yellow).")]
+    public bool showNetVector = true;
+
+    [Header("Debug")]
     [Tooltip("If true, prints the raw acceleration values to the Unity Console.")]
     public bool enableConsoleLogging = false;
     #endregion
@@ -95,6 +103,7 @@ public class SensorTrackingReceiver : MonoBehaviour
     private GameObject _arrowX;
     private GameObject _arrowY;
     private GameObject _arrowZ;
+    private GameObject _arrowNet;
     #endregion
 
     #region Initialization
@@ -116,7 +125,7 @@ public class SensorTrackingReceiver : MonoBehaviour
     }
 
     /// <summary>
-    /// Creates three arrow instances.
+    /// Creates four arrow instances (3 axes + 1 net vector).
     /// </summary>
     private void InitializeArrows()
     {
@@ -129,10 +138,11 @@ public class SensorTrackingReceiver : MonoBehaviour
         _arrowX = CreateAndColorArrow("Vector_X (Red)", Color.red);
         _arrowY = CreateAndColorArrow("Vector_Y (Green)", Color.green);
         _arrowZ = CreateAndColorArrow("Vector_Z (Blue)", Color.blue);
+        _arrowNet = CreateAndColorArrow("Vector_Net (Yellow)", Color.yellow);
     }
 
     /// <summary>
-    /// Instantiates the prefab and tints the materials.
+    /// Instantiates the prefab, tints the materials, and defaults to hidden.
     /// </summary>
     private GameObject CreateAndColorArrow(string objName, Color tintColor)
     {
@@ -225,8 +235,7 @@ public class SensorTrackingReceiver : MonoBehaviour
             targetAccel = _latestAccelerationRaw;
         }
 
-        // --- NEW: Smooth Interpolation ---
-        // Lerp glides the current value towards the target value based on Time.deltaTime, making it frame-independent
+        // Lerp glides the current value towards the target value based on Time.deltaTime
         _currentSmoothedAcceleration = Vector3.Lerp(_currentSmoothedAcceleration, targetAccel, interpolationSpeed * Time.deltaTime);
 
         if (enableConsoleLogging)
@@ -234,46 +243,78 @@ public class SensorTrackingReceiver : MonoBehaviour
             Debug.Log($"[Safe-Strike] Sensor {sensorIndex} Target Raw: X={targetAccel.x:F0} | Y={targetAccel.y:F0} | Z={targetAccel.z:F0}");
         }
 
-        // Pass the smoothed data into the visualizer
-        UpdateArrow(_arrowX, _currentSmoothedAcceleration.x, transform.right);
-        UpdateArrow(_arrowY, _currentSmoothedAcceleration.y, transform.up);
-        UpdateArrow(_arrowZ, _currentSmoothedAcceleration.z, transform.forward);
+        // Pass the smoothed data into the component visualizers
+        UpdateComponentArrow(_arrowX, _currentSmoothedAcceleration.x, transform.right, showAxisVectors);
+        UpdateComponentArrow(_arrowY, _currentSmoothedAcceleration.y, transform.up, showAxisVectors);
+        UpdateComponentArrow(_arrowZ, _currentSmoothedAcceleration.z, transform.forward, showAxisVectors);
+
+        // Update the net combined vector visualizer
+        UpdateNetArrow(_arrowNet, _currentSmoothedAcceleration, showNetVector);
     }
 
     /// <summary>
-    /// Evaluates the threshold, scales, and rotates the arrow along the Y-axis. 
+    /// Evaluates the threshold, scales, and rotates an individual component axis arrow.
     /// </summary>
-    private void UpdateArrow(GameObject arrow, float forceValue, Vector3 axisDirection)
+    private void UpdateComponentArrow(GameObject arrow, float forceValue, Vector3 axisDirection, bool isVisible)
     {
         if (arrow == null) return;
 
-        // --- NEW: Threshold Check ---
-        // If the absolute force is below our threshold, disable the mesh entirely and stop processing
-        if (Mathf.Abs(forceValue) < minDisplayThreshold)
+        // If toggled off or below threshold, hide completely
+        if (!isVisible || Mathf.Abs(forceValue) < minDisplayThreshold)
         {
             if (arrow.activeSelf) arrow.SetActive(false);
             return;
         }
 
-        // If it passed the threshold, ensure it is visible
         if (!arrow.activeSelf) arrow.SetActive(true);
 
-        // Calculate normalized magnitude (0.0 to 1.0)
         float magnitude = Mathf.Clamp01(Mathf.Abs(forceValue) / maxAcceleration);
 
-        // Calculate visual dimensions
         float length = Mathf.Max(0.01f, magnitude * maxArrowLength);
         float thickness = baseThickness + (magnitude * 0.1f); 
 
-        // Determine target direction (flip if acceleration is negative)
         Vector3 targetDirection = forceValue >= 0 ? axisDirection : -axisDirection;
 
-        // Apply scale and orientation hardcoded to the Y-axis of the Blender model
         arrow.transform.localScale = new Vector3(thickness, length, thickness);
         
         if (targetDirection != Vector3.zero) 
         {
             arrow.transform.rotation = Quaternion.FromToRotation(Vector3.up, targetDirection);
+        }
+    }
+
+    /// <summary>
+    /// Evaluates the threshold, scales, and rotates the combined net force arrow in full 3D space.
+    /// </summary>
+    private void UpdateNetArrow(GameObject arrow, Vector3 netForce, bool isVisible)
+    {
+        if (arrow == null) return;
+
+        float magnitudeRaw = netForce.magnitude;
+
+        // If toggled off or the combined force is below threshold, hide completely
+        if (!isVisible || magnitudeRaw < minDisplayThreshold)
+        {
+            if (arrow.activeSelf) arrow.SetActive(false);
+            return;
+        }
+
+        if (!arrow.activeSelf) arrow.SetActive(true);
+
+        float magnitudeNorm = Mathf.Clamp01(magnitudeRaw / maxAcceleration);
+
+        float length = Mathf.Max(0.01f, magnitudeNorm * maxArrowLength);
+        // Make the net vector slightly thicker so it stands out from the individual axes
+        float thickness = (baseThickness * 1.2f) + (magnitudeNorm * 0.15f); 
+
+        // Convert the local force vector into the world-space direction of the parent object
+        Vector3 worldNetDirection = transform.TransformDirection(netForce);
+
+        arrow.transform.localScale = new Vector3(thickness, length, thickness);
+        
+        if (worldNetDirection != Vector3.zero) 
+        {
+            arrow.transform.rotation = Quaternion.FromToRotation(Vector3.up, worldNetDirection.normalized);
         }
     }
     #endregion
