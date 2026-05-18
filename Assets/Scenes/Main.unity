@@ -1003,8 +1003,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SensorTrackingReceiver
   udpPort: 5005
   sensorIndex: 0
+  arrowPrefab: {fileID: 919132149155446097, guid: a3c14438e36f6655295956041c976fe1, type: 3}
+  prefabLengthAxis: 1
   maxAcceleration: 2000
-  maxArrowLength: 3
+  maxArrowLength: 1
+  baseThickness: 0.25
   enableConsoleLogging: 1
 --- !u!1 &1347122497
 GameObject:
