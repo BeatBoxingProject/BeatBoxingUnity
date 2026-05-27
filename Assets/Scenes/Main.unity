@@ -863,6 +863,7 @@ GameObject:
   - component: {fileID: 1191044827}
   - component: {fileID: 1191044831}
   - component: {fileID: 1191044832}
+  - component: {fileID: 1191044833}
   m_Layer: 0
   m_Name: GloveRight
   m_TagString: PlayerHand
@@ -1025,6 +1026,25 @@ MonoBehaviour:
   minDisplayThreshold: 200
   showAxisVectors: 1
   showNetVector: 1
+--- !u!114 &1191044833
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1191044825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abec34c5eb0d484dbb42cbcac834e17a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PunchAnalyzer
+  telemetryProvider: {fileID: 1191044831}
+  effectiveMassKg: 3.5
+  impactThresholdMs2: 50
+  cooldownDuration: 0.4
+  OnPunchLanded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1347122497
 GameObject:
   m_ObjectHideFlags: 0
