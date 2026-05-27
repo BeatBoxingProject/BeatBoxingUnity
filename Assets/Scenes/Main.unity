@@ -861,7 +861,6 @@ GameObject:
   - component: {fileID: 1191044829}
   - component: {fileID: 1191044828}
   - component: {fileID: 1191044827}
-  - component: {fileID: 1191044831}
   - component: {fileID: 1191044832}
   - component: {fileID: 1191044833}
   m_Layer: 0
@@ -991,20 +990,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1191044825}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1191044831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1191044825}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a058f9cd8827566e0ab14fa64c6c6ba5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SensorTrackingReceiver
-  udpPort: 5005
-  sensorIndex: 0
 --- !u!114 &1191044832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1017,7 +1002,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee196f6e4cf81f976b931373b63ba84e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VolumetricVisualizer
-  telemetryProvider: {fileID: 1191044831}
+  telemetryProvider: {fileID: 2145028593}
+  trackedHand: 1
   arrowPrefab: {fileID: 919132149155446097, guid: a3c14438e36f6655295956041c976fe1, type: 3}
   maxAcceleration: 2000
   maxArrowLength: 1
@@ -1038,7 +1024,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abec34c5eb0d484dbb42cbcac834e17a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PunchAnalyzer
-  telemetryProvider: {fileID: 1191044831}
+  telemetryProvider: {fileID: 2145028593}
+  trackedHand: 1
   effectiveMassKg: 3.5
   impactThresholdMs2: 50
   cooldownDuration: 0.4
@@ -1089,6 +1076,8 @@ GameObject:
   - component: {fileID: 1407819701}
   - component: {fileID: 1407819700}
   - component: {fileID: 1407819699}
+  - component: {fileID: 1407819703}
+  - component: {fileID: 1407819704}
   m_Layer: 0
   m_Name: GloveLeft
   m_TagString: PlayerHand
@@ -1216,6 +1205,48 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1407819697}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1407819703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1407819697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee196f6e4cf81f976b931373b63ba84e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VolumetricVisualizer
+  telemetryProvider: {fileID: 2145028593}
+  trackedHand: 0
+  arrowPrefab: {fileID: 919132149155446097, guid: a3c14438e36f6655295956041c976fe1, type: 3}
+  maxAcceleration: 2000
+  maxArrowLength: 1
+  baseThickness: 0.25
+  interpolationSpeed: 15
+  minDisplayThreshold: 200
+  showAxisVectors: 1
+  showNetVector: 1
+--- !u!114 &1407819704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1407819697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abec34c5eb0d484dbb42cbcac834e17a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PunchAnalyzer
+  telemetryProvider: {fileID: 2145028593}
+  trackedHand: 0
+  effectiveMassKg: 3.5
+  impactThresholdMs2: 30
+  cooldownDuration: 0.4
+  OnPunchLanded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1431173878
 GameObject:
   m_ObjectHideFlags: 0
@@ -1442,6 +1473,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2145028591}
   - component: {fileID: 2145028592}
+  - component: {fileID: 2145028593}
   m_Layer: 0
   m_Name: GloveManager
   m_TagString: PlayerHand
@@ -1487,6 +1519,19 @@ MonoBehaviour:
   flipY: 1
   flipZ: 1
   smoothing: 0.5
+--- !u!114 &2145028593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2145028587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a058f9cd8827566e0ab14fa64c6c6ba5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SensorTelemetryProvider
+  udpPort: 5005
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

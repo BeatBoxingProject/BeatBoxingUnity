@@ -4,6 +4,17 @@ using UnityEngine.Events;
 using System;
 #endregion
 
+#region Shared Enums
+/// <summary>
+/// Shared enumeration to distinguish between the left and right hardware sensors.
+/// </summary>
+public enum HandSide 
+{ 
+    Left, 
+    Right 
+}
+#endregion
+
 #region Data Contracts
 /// <summary>
 /// A data container holding all calculated physics for a single punch event.
@@ -11,6 +22,7 @@ using System;
 [Serializable]
 public struct PunchMetrics
 {
+    public HandSide Hand;
     public float PeakAccelerationMs2;
     public float ForceNewtons;
     public Vector3 ImpactDirection;
@@ -24,8 +36,11 @@ public class PunchAnalyzer : MonoBehaviour
 {
     #region Configuration
     [Header("Dependencies")]
-    [Tooltip("The data source for this analyzer.")]
+    [Tooltip("The centralized data source for this analyzer.")]
     [SerializeField] private SensorTelemetryProvider telemetryProvider;
+
+    [Tooltip("Which hand's telemetry should this analyzer process?")]
+    [SerializeField] private HandSide trackedHand = HandSide.Left;
 
     [Header("Physics Constants")]
     [Tooltip("The effective body mass (in kg) transferred into the punch. (Average is 2kg - 5kg).")]
@@ -57,9 +72,13 @@ public class PunchAnalyzer : MonoBehaviour
     #region Unity Lifecycle
     private void Update()
     {
-        if (!telemetryProvider) return;
+        if (telemetryProvider == null) return;
 
-        Vector3 currentAccel = telemetryProvider.RawAcceleration;
+        // Fetch the correct data based on the configured hand side
+        Vector3 currentAccel = (trackedHand == HandSide.Left) 
+            ? telemetryProvider.LeftRawAcceleration 
+            : telemetryProvider.RightRawAcceleration;
+
         float currentMagnitudeMs2 = currentAccel.magnitude / LSB_TO_MS2;
 
         ProcessStateMachine(currentAccel, currentMagnitudeMs2);
@@ -122,13 +141,14 @@ public class PunchAnalyzer : MonoBehaviour
 
         PunchMetrics metrics = new PunchMetrics
         {
+            Hand = trackedHand,
             PeakAccelerationMs2 = peakMs2,
             ForceNewtons = forceNewtons,
             ImpactDirection = _currentPeakDirection
         };
 
         // Standard Debug Logging
-        Debug.Log($"[Punch Analyzer] IMPACT! Force: <b>{forceNewtons:F0} N</b> (Accel: {peakMs2:F1} m/s^2)");
+        Debug.Log($"[{trackedHand} Analyzer] IMPACT! Force: <b>{forceNewtons:F0} N</b> (Accel: {peakMs2:F1} m/s^2)");
 
         // Fire the event so UI, Audio, and Score systems can react autonomously
         OnPunchLanded?.Invoke(metrics);

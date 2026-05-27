@@ -10,8 +10,11 @@ public class VolumetricVisualizer : MonoBehaviour
 {
     #region Configuration Fields
     [Header("Dependencies")]
-    [Tooltip("The data source providing the raw acceleration vectors.")]
+    [Tooltip("The centralized data source providing the raw acceleration vectors.")]
     [SerializeField] private SensorTelemetryProvider telemetryProvider;
+
+    [Tooltip("Which hand's telemetry should this visualizer process?")]
+    [SerializeField] private HandSide trackedHand = HandSide.Left;
 
     [Header("Volumetric Visualization")]
     [Tooltip("Assign your custom Blender arrow prefab here. Must be modeled along the Y-axis (Up).")]
@@ -68,7 +71,7 @@ public class VolumetricVisualizer : MonoBehaviour
     {
         if (arrowPrefab == null)
         {
-            Debug.LogError("[Safe-Strike] Arrow Prefab is missing! Please assign it in the Inspector.");
+            Debug.LogError($"[{trackedHand} Visualizer] Arrow Prefab is missing! Please assign it in the Inspector.");
             return;
         }
 
@@ -111,8 +114,10 @@ public class VolumetricVisualizer : MonoBehaviour
     {
         if (telemetryProvider == null) return;
 
-        // Safely fetch the latest raw data from our decoupled provider
-        Vector3 targetAccel = telemetryProvider.RawAcceleration;
+        // Safely fetch the correct raw data based on the assigned hand side
+        Vector3 targetAccel = (trackedHand == HandSide.Left) 
+            ? telemetryProvider.LeftRawAcceleration 
+            : telemetryProvider.RightRawAcceleration;
 
         // Lerp glides the current value towards the target value based on Time.deltaTime
         _currentSmoothedAcceleration = Vector3.Lerp(_currentSmoothedAcceleration, targetAccel, interpolationSpeed * Time.deltaTime);
