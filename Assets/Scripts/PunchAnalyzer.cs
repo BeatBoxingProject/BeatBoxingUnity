@@ -13,6 +13,15 @@ public enum HandSide
     Left, 
     Right 
 }
+
+/// <summary>
+/// Defines the mathematical approach used to score the power of a punch.
+/// </summary>
+public enum PowerCalculationMethod
+{
+    PeakForce,
+    AreaUnderCurve
+}
 #endregion
 
 #region Data Contracts
@@ -24,13 +33,16 @@ public struct PunchMetrics
 {
     public HandSide Hand;
     public float PeakAccelerationMs2;
-    public float ForceNewtons;
+    public float PeakForceNewtons;
+    public float ImpulseNewtonSeconds;
+    public float FinalPunchScore;
     public Vector3 ImpactDirection;
 }
 #endregion
 
 /// <summary>
-/// Analyzes raw telemetry to detect impacts, calculate force (F=ma), and dispatch events.
+/// Analyzes raw telemetry to detect impacts, calculate physics (Peak Force vs Impulse), 
+/// and filters out shadowboxing noise using an integration time window.
 /// </summary>
 public class PunchAnalyzer : MonoBehaviour
 {
@@ -53,8 +65,15 @@ public class PunchAnalyzer : MonoBehaviour
     [Tooltip("Minimum acceleration (in m/s^2) required to trigger a punch detection. (1G = ~9.8 m/s^2)")]
     [SerializeField] private float impactThresholdMs2 = 30f; 
 
-    [Tooltip("Time in seconds to wait before allowing another punch to be detected (prevents physical sensor ringing).")]
+    [Tooltip("The maximum time (in seconds) to accumulate area. A real heavy bag impact is ~0.06s. This prevents shadowboxing from scoring high.")]
+    [SerializeField] private float maxIntegrationTime = 0.06f;
+
+    [Tooltip("Time in seconds to wait before allowing another punch to be detected.")]
     [SerializeField] private float cooldownDuration = 0.4f;
+
+    [Header("Scoring")]
+    [Tooltip("AreaUnderCurve (Impulse) correctly rewards heavy bag punches when combined with the integration window.")]
+    [SerializeField] private PowerCalculationMethod scoringMethod = PowerCalculationMethod.AreaUnderCurve;
 
     [Header("Events")]
     public UnityEvent<PunchMetrics> OnPunchLanded;
@@ -65,7 +84,11 @@ public class PunchAnalyzer : MonoBehaviour
     private DetectionState _currentState = DetectionState.Idle;
     
     private float _cooldownTimer = 0f;
+    private float _impactTimer = 0f;
+    
+    // Physics tracking variables
     private float _currentPeakAccelRaw = 0f;
+    private float _accumulatedVelocityMs = 0f;
     private Vector3 _currentPeakDirection = Vector3.zero;
     #endregion
 
@@ -87,7 +110,7 @@ public class PunchAnalyzer : MonoBehaviour
 
     #region Core Logic
     /// <summary>
-    /// Processes the continuous data stream to isolate distinct punch impacts.
+    /// Processes the continuous data stream to isolate distinct punch impacts and accumulate physics data.
     /// </summary>
     private void ProcessStateMachine(Vector3 rawAccel, float magnitudeMs2)
     {
@@ -98,20 +121,35 @@ public class PunchAnalyzer : MonoBehaviour
                 if (magnitudeMs2 >= impactThresholdMs2)
                 {
                     _currentState = DetectionState.TrackingPeak;
+                    
+                    // Initialize physics tracking for the new impact
                     _currentPeakAccelRaw = rawAccel.magnitude;
                     _currentPeakDirection = rawAccel.normalized;
+                    _accumulatedVelocityMs = magnitudeMs2 * Time.deltaTime;
+                    _impactTimer = Time.deltaTime;
                 }
                 break;
 
             case DetectionState.TrackingPeak:
-                // Continue climbing if the force is still increasing
+                // Accumulate the time we have spent in this specific impact
+                _impactTimer += Time.deltaTime;
+
+                // IMPORTANT FILTER: Only integrate Area Under Curve for the true physical impact window (~60ms).
+                // This ignores the long, drawn-out muscle retraction of hitting the air.
+                if (_impactTimer <= maxIntegrationTime)
+                {
+                    _accumulatedVelocityMs += magnitudeMs2 * Time.deltaTime;
+                }
+
+                // Always track the peak, even if it happens slightly after the window
                 if (rawAccel.magnitude > _currentPeakAccelRaw)
                 {
                     _currentPeakAccelRaw = rawAccel.magnitude;
                     _currentPeakDirection = rawAccel.normalized;
                 }
-                // If the force drops back below threshold, the impact event is over. Calculate and fire.
-                else if (magnitudeMs2 < impactThresholdMs2) 
+                
+                // If the force drops back below threshold, the impact event is completely over. Calculate and fire.
+                if (magnitudeMs2 < impactThresholdMs2) 
                 {
                     DispatchPunchEvent();
                     
@@ -132,25 +170,29 @@ public class PunchAnalyzer : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculates the final physics and broadcasts the event to the rest of the game.
+    /// Compiles the tracked metrics, determines the final score, and dispatches the event.
     /// </summary>
     private void DispatchPunchEvent()
     {
         float peakMs2 = _currentPeakAccelRaw / LSB_TO_MS2;
-        float forceNewtons = effectiveMassKg * peakMs2; // F = m * a
+        float forceNewtons = effectiveMassKg * peakMs2;                   
+        float impulseNs = effectiveMassKg * _accumulatedVelocityMs;       
+
+        float finalScore = (scoringMethod == PowerCalculationMethod.PeakForce) ? forceNewtons : impulseNs;
+        string scoreLabel = (scoringMethod == PowerCalculationMethod.PeakForce) ? "Newtons" : "N*s (Impulse)";
 
         PunchMetrics metrics = new PunchMetrics
         {
             Hand = trackedHand,
             PeakAccelerationMs2 = peakMs2,
-            ForceNewtons = forceNewtons,
+            PeakForceNewtons = forceNewtons,
+            ImpulseNewtonSeconds = impulseNs,
+            FinalPunchScore = finalScore,
             ImpactDirection = _currentPeakDirection
         };
 
-        // Standard Debug Logging
-        Debug.Log($"[{trackedHand} Analyzer] IMPACT! Force: <b>{forceNewtons:F0} N</b> (Accel: {peakMs2:F1} m/s^2)");
+        Debug.Log($"[{trackedHand} Analyzer] IMPACT! Score: <b>{finalScore:F0} {scoreLabel}</b> | Peak: {forceNewtons:F0} N | Area: {impulseNs:F0} N*s");
 
-        // Fire the event so UI, Audio, and Score systems can react autonomously
         OnPunchLanded?.Invoke(metrics);
     }
     #endregion

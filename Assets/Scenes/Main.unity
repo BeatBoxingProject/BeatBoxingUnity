@@ -1029,6 +1029,7 @@ MonoBehaviour:
   effectiveMassKg: 3.5
   impactThresholdMs2: 50
   cooldownDuration: 0.4
+  scoringMethod: 1
   OnPunchLanded:
     m_PersistentCalls:
       m_Calls: []
@@ -1242,8 +1243,9 @@ MonoBehaviour:
   telemetryProvider: {fileID: 2145028593}
   trackedHand: 0
   effectiveMassKg: 3.5
-  impactThresholdMs2: 30
+  impactThresholdMs2: 50
   cooldownDuration: 0.4
+  scoringMethod: 1
   OnPunchLanded:
     m_PersistentCalls:
       m_Calls: []
