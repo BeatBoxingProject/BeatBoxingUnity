@@ -862,6 +862,7 @@ GameObject:
   - component: {fileID: 1191044828}
   - component: {fileID: 1191044827}
   - component: {fileID: 1191044831}
+  - component: {fileID: 1191044832}
   m_Layer: 0
   m_Name: GloveRight
   m_TagString: PlayerHand
@@ -1003,12 +1004,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SensorTrackingReceiver
   udpPort: 5005
   sensorIndex: 0
+--- !u!114 &1191044832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1191044825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee196f6e4cf81f976b931373b63ba84e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VolumetricVisualizer
+  telemetryProvider: {fileID: 1191044831}
   arrowPrefab: {fileID: 919132149155446097, guid: a3c14438e36f6655295956041c976fe1, type: 3}
-  prefabLengthAxis: 1
   maxAcceleration: 2000
   maxArrowLength: 1
   baseThickness: 0.25
-  enableConsoleLogging: 1
+  interpolationSpeed: 15
+  minDisplayThreshold: 200
+  showAxisVectors: 1
+  showNetVector: 1
 --- !u!1 &1347122497
 GameObject:
   m_ObjectHideFlags: 0
